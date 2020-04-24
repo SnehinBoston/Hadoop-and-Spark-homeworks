@@ -1,0 +1,37 @@
+1.a. Because the variable num_readers has already been updated before the write thread is called, that is the read thread runs first, updates num_readers
+     and then goes to sleep, so we do not find the num_readers to be zero and assertion fails. num_readers is actually 2.
+
+1.b. There is actually no synchronization here, so reader and writer threads work parallel that is when one thread sleeps, other thread acquires the task_stats lock and completes the task.
+     However, context switch takes a little time, so we get a total running time a little above 100 milliseconds.
+
+2.   So, there are 20 read tasks and 20 write tasks being done over here.
+     Each thread acquires the acquire_release_lock first to get hold of the execution (so that no other thread can get hold of the execution)
+     and then acquires task lock and then sleeps for 10 ms. This process applies for all the read threads first and then write threads, since there is only one lock being used by read as well as write threads.
+     So, total execution time is a little over (10(read thread)+10(read thread)+10(write thread)+10(write thread)) * 10 ms.
+
+3.a. The code will run for a very long time because this is kind of a sequential execution the very first write thread acquires the write lock,
+     does some work and goes to sleep for 1 ms, and then releases the lock, meanwhile the second thread acquires the acquire_release_lock goes to sleep for 10ms,
+     and then releases the lock and during these 10ms no other thread can acquire the lock, unless the first thread has finished its work,
+     all the subsequent threads keep on acquiring the lock and sleep for 10ms before releasing the lock.
+     This increases the running time of the process.
+3.b. In this mechanism, while the first thread is executing(after acquiring the lock), the second thread acquires the acquire_release_lock,
+     if it is unable to get the lock, it releases the acquire_release_lock and goes to sleep, so that any other thread can try to get the acquire_release_lock.
+
+     }
+
+4.a. For the shared read lock, the read thread gets the acquire_release_lock and if the write lock is held,
+     then it releases the acquire_release_lock and keeps on trying to acquire the read lock. However, if no write thread is holding write lock,
+     then it acquires the read lock. Here instead of sleeping the read thread, we let it continuously try to get the lock as we know that sleeping for read operation is quite expensive, as there are generally many readers.
+
+     20 reads and 20 writes in 323 milliseconds.
+
+4.b. Changing the number of readers has very little impact on the running time as multiple read threads can read at a time,
+     and also read threads do not sleep waiting to acquire the lock.
+     50 reads and 20 writes in 312 milliseconds.
+
+4.c. 50 reads and 50 writes in 615 milliseconds.
+     Changing the number of writers almost doubles the time as there is delay before trying again for the write lock after failing at the first attempt to obtain the lock.
+
+4.d. The NUM_READERS does not contribute much to the running time whereas as we increase the NUM_WRITERS by 1, we increase the running time by approximately 100 ms.
+     Running time = 100 * NUM_WRITERS + Process running time.
+     Here, the Process running time refers to the time taken to execute the reader portion of code. This is approximately 120ms irrespective of NUM_READERS.

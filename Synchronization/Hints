@@ -1,0 +1,44 @@
+Hi all,
+   I hope you have all noticed that in class, we extended the deadline
+for HW5 until end of Sunday.  The deadline was changed on the course
+web page.
+
+   There were some questions during office hours about Question 4 of HW5.
+It's about how to follow the "HINT" that I offer.  I'm now including the
+essence of that discussion here, so that everyone can benefit from that.
+
+First, as the assignment, says:
+ There must be no calls to sleep or nanosleep (and no timing loops or
+ other "busy waiting") in the remaining definitions.
+ HINT:  For the reader function, note that the reader calls
+        acquire_shared_lock().  Inside acquire_shared_lock(), can you use
+        pthread_mutex_lock/unlock to wait longer while the write_lock is held?
+
+The only difficult thing to do is to write acquire_shared_lock().
+You can begin by adapting the model of acquire_exclusive_lock().
+In that model, we roughly have:
+ while (1) // infinite loop
+   if (the reader can safely acquire access), then
+     reader acquires access and breaks out of the loop
+   otherwise
+     sleep before we try again // but the assignment is to replay the sleep
+
+The assignment says to try using pthread_mutex_lock/unlock.
+So, a natural path is to replace the sleep with pthread_mutex_lock.
+The only question remaining is:
+  Where should we put the pthread_mutex_unlock, and do we need to do
+  anything special before we do pthread_mutex_unlock?
+
+Also, recall that the goal is only to replace the sleep statement.
+We use the acquire_release_lock to "protect" our access to the global
+variabgles, like num_*.  But here, we are not using the write_lock
+to protect any num_* variables, since we are merely replacing the sleep.
+
+I hope that this leads all of you to the right path toward a solution.
+
+Also, note the motivation here.  In question 3, we use two sleeps.
+Sleeps are inefficient.  They waste time by waiting too long.
+In question 4, we want to eliminate the sleep that the reader would
+be used.  We are assuming that writing is probably rare, but reading
+is common.  So, we are optimizing the reader by eliminating the
+sleep statement inside the reader.
